@@ -3,6 +3,8 @@ package vt100
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"strings"
 )
 
@@ -10,19 +12,19 @@ import (
 const (
 	ATTR_RESET = 0
 
-	ATTR_BRIGHT = 1
-	ATTR_BOLD = 1  // alias for BRIGHT
-	ATTR_DIM = 2
-	ATTR_FAINT = 2  // alias for DIM
-	ATTR_ITALIC = 3  // not widely supported
-	ATTR_UNDERLINE = 4
-	ATTR_BLINK = 5
-	ATTR_BLINK_FAST = 6  // not widely supported
-	ATTR_REVERSE = 7
-	ATTR_CONCEAL = 8
-	ATTR_STRIKETHROUGH = 9  // not widely supported
+	ATTR_BRIGHT        = 1
+	ATTR_BOLD          = 1 // alias for BRIGHT
+	ATTR_DIM           = 2
+	ATTR_FAINT         = 2 // alias for DIM
+	ATTR_ITALIC        = 3 // not widely supported
+	ATTR_UNDERLINE     = 4
+	ATTR_BLINK         = 5
+	ATTR_BLINK_FAST    = 6 // not widely supported
+	ATTR_REVERSE       = 7
+	ATTR_CONCEAL       = 8
+	ATTR_STRIKETHROUGH = 9 // not widely supported
 
-	ATTR_FONT_STD = 10
+	ATTR_FONT_STD   = 10
 	ATTR_FONT_ALT_1 = 11
 	ATTR_FONT_ALT_2 = 12
 	ATTR_FONT_ALT_3 = 13
@@ -33,42 +35,50 @@ const (
 	ATTR_FONT_ALT_8 = 18
 	ATTR_FONT_ALT_9 = 19
 
-	ATTR_NORMAL = 22  // cancels out ATTR_BOLD/ATTR_BRIGHT and ATTR_FAINT/ATTR_DIM
-	ATTR_NO_ITALIC = 23  // cancels out ATTR_ITALIC
-	ATTR_NO_UNDERLINE = 24  // cancels out ATTR_UNDERLINE
-	ATTR_NO_BLINK = 25  // cancels out ATTR_BLINK and ATTR_BLINK_FAST
-	ATTR_NO_CONCEAL = 28  // cancels out ATTR_CONCEAL
-	ATTR_NO_STRIKETHROUGH = 29  // cancels out ATTR_STRIKETHROUGH
+	ATTR_NORMAL           = 22 // cancels out ATTR_BOLD/ATTR_BRIGHT and ATTR_FAINT/ATTR_DIM
+	ATTR_NO_ITALIC        = 23 // cancels out ATTR_ITALIC
+	ATTR_NO_UNDERLINE     = 24 // cancels out ATTR_UNDERLINE
+	ATTR_NO_BLINK         = 25 // cancels out ATTR_BLINK and ATTR_BLINK_FAST
+	ATTR_NO_CONCEAL       = 28 // cancels out ATTR_CONCEAL
+	ATTR_NO_STRIKETHROUGH = 29 // cancels out ATTR_STRIKETHROUGH
 
-	ATTR_FG_BLACK = 30
-	ATTR_FG_RED = 31
-	ATTR_FG_GREEN = 32
-	ATTR_FG_YELLOW = 33
-	ATTR_FG_BLUE = 34
+	ATTR_FG_BLACK   = 30
+	ATTR_FG_RED     = 31
+	ATTR_FG_GREEN   = 32
+	ATTR_FG_YELLOW  = 33
+	ATTR_FG_BLUE    = 34
 	ATTR_FG_MAGENTA = 35
-	ATTR_FG_CYAN = 36
-	ATTR_FG_WHITE = 37
-	ATTR_FG_256 = 38  // used in setting foreground in 256-colour terminals, should not be used directly (use SetFG256(n) instead)
-	ATTR_FG_RESET = 39  // reset foreground to default
+	ATTR_FG_CYAN    = 36
+	ATTR_FG_WHITE   = 37
+	ATTR_FG_256     = 38 // used in setting foreground in 256-colour terminals, should not be used directly (use SetFG256(n) instead)
+	ATTR_FG_RESET   = 39 // reset foreground to default
 
-	ATTR_BG_BLACK = 40
-	ATTR_BG_RED = 41
-	ATTR_BG_GREEN = 42
-	ATTR_BG_YELLOW = 43
-	ATTR_BG_BLUE = 44
+	ATTR_BG_BLACK   = 40
+	ATTR_BG_RED     = 41
+	ATTR_BG_GREEN   = 42
+	ATTR_BG_YELLOW  = 43
+	ATTR_BG_BLUE    = 44
 	ATTR_BG_MAGENTA = 45
-	ATTR_BG_CYAN = 46
-	ATTR_BG_WHITE = 47
-	ATTR_BG_256 = 38  // used in setting background in 256-colour terminals, should not be used directly (use SetBG256(n) instead)
-	ATTR_BG_RESET = 39  // reset background to default
+	ATTR_BG_CYAN    = 46
+	ATTR_BG_WHITE   = 47
+	ATTR_BG_256     = 38 // used in setting background in 256-colour terminals, should not be used directly (use SetBG256(n) instead)
+	ATTR_BG_RESET   = 39 // reset background to default
 )
+
+var (
+	outStream io.Writer = os.Stdout
+)
+
+func SetOutStream(newOutStream io.Writer) {
+	outStream = newOutStream
+}
 
 func emitEscape(baseCode string, args ...interface{}) {
 	strArgs := make([]string, len(args))
 	for i, arg := range args {
 		strArgs[i] = fmt.Sprint(arg)
 	}
-	fmt.Print("\x1B[" + strings.Join(strArgs, ";") + baseCode)
+	fmt.Fprint(outStream, "\x1B["+strings.Join(strArgs, ";")+baseCode)
 }
 
 // Move the cursor up r rows.
@@ -205,5 +215,5 @@ func ResetScreen() {
 // Print some text at a given [row, col].
 func PrintAt(row, col uint, text string) {
 	CursorTo(row, col)
-	fmt.Print(text)
+	fmt.Fprint(outStream, text)
 }
